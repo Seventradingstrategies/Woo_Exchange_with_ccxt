@@ -1,0 +1,83 @@
+import ccxt
+import APIKey #This is my own API Keys that I've saved
+import json
+import time
+import pandas as pd
+
+#Instantiate with Woo Exchange
+woo = ccxt.woo()
+
+#Connect with exchange using API Keys
+woo = ccxt.woo({
+    "enableRateLimit": True,
+    "apiKey": APIKey.production_api_key,
+    "secret": APIKey.production_api_secret_key
+})
+
+woo_orderbook = woo.fetch_order_book("SPOT_BTC_USDT")
+first_ask_spot = woo_orderbook["asks"][0][0]
+first_bid_spot = woo_orderbook["bids"][0][0]
+
+print(f"The First Ask for BTC-USDT is: {first_ask_spot}")
+print(f"The First Bids for BTC-USDT is: {first_bid_spot}")
+
+#Creating a function for bid-ask Spread
+def spread():
+    spread = first_ask_spot - first_bid_spot
+    return spread
+
+def spread_percentage():
+    spread_percentage = ((first_ask_spot - first_bid_spot) / first_ask_spot ) * 100
+    return spread_percentage
+
+print(f"The Spread For Asset is: {spread()}")
+print(f"The Spread For Asset is: {spread_percentage()}%")
+
+#Steps To Fetch all the pairing and symbols
+
+#Step 1: Load all the market pairing and data
+woo_market = woo.load_markets()
+print(woo_market)
+
+#Step 2: Fetch all the Key in lists
+for k in woo_market.keys():
+    print(k)
+
+#Step 3: Test the Key Values and Fetch the actual Index
+print(woo_market["AAVE/USDT"]["id"])
+
+#step 4: Fetching all the pairing and symbols
+for item in woo_market:
+    print(woo_market[item]["id"])
+
+#Alternative with list comprehension
+symbols = [symbol["id"] for symbol in woo_market.values()]
+symbols2 = [symbol for symbol in symbols if symbol.startswith("SPOT")]
+
+ask_spot = []
+bid_spot = []
+symbols_all = []
+
+#printing all the spread pairing with made function
+for item in symbols2:
+    pairing_orderbook = woo.fetch_order_book(item)
+    first_ask_spot = pairing_orderbook["asks"][0][0]
+    first_bid_spot = pairing_orderbook["bids"][0][0]
+    print(f"The First Ask for {item} is: {first_ask_spot}")
+    print(f"The First Bids for {item} is: {first_bid_spot}")
+    ask_spot.append(first_ask_spot)
+    bid_spot.append(first_bid_spot)
+    symbols_all.append(item)
+    time.sleep(0.2)
+
+pandas =  {"ask_spot" : ask_spot,
+"bid_spot": bid_spot,
+"symbols_all" : symbols_all}
+
+pandas_1 = pd.DataFrame(pandas, index=[symbols_all])
+print(pandas_1)
+
+
+
+
+
