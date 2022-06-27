@@ -26,6 +26,7 @@ def spread():
     spread = first_ask_spot - first_bid_spot
     return spread
 
+#Creating a function for bid-ask Spread Percentage
 def spread_percentage():
     spread_percentage = ((first_ask_spot - first_bid_spot) / first_ask_spot ) * 100
     return spread_percentage
@@ -54,6 +55,7 @@ for item in woo_market:
 symbols = [symbol["id"] for symbol in woo_market.values()]
 symbols2 = [symbol for symbol in symbols if symbol.startswith("SPOT")]
 
+#Create Function spread_percentage
 def spread_percentage(ask,bids):
     spread1 = ((ask - bids) / ask) * 100
     return spread1
@@ -81,12 +83,7 @@ pandas = {"ask_spot" : ask_spot,
            "spread": spread_1}
 
 pandas_1 = pd.DataFrame(pandas, index=[symbols_all])
+
 print(pandas_1)
-
-
-
-
-
-
-
-
+print(pandas_1["spread"].nlargest(10)) #print the largest Spread to trade
+print(pandas_1["spread"].nsmallest(10)) #Print the smallest spread to trade
