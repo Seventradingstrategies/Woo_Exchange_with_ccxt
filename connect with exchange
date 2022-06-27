@@ -5,26 +5,19 @@ import matplotlib.pyplot as plt
 import APIKey
 import time
 
-ftx = ccxt.ftx()
-#woo = ccxt.woo()
-binance = ccxt.binance()
 
-woo_market = "nothing"
-ftx_market = ftx.load_markets()
-binance = binance.load_markets()
+woo = ccxt.woo()
 
-
-
-#Connect with exchange using API Keys
+#Connect with exchange using your API Keys
 woo = ccxt.woo({
     "enableRateLimit": True,
     "apiKey": APIKey.production_api_key,
     "secret": APIKey.production_api_secret_key
 })
 
-woo_orderbook = woo.fetch_order_book("SPOT_WOO_USDT")
-first_ask_spot = woo_orderbook["asks"][0][0]
-second_ask_perp = woo_orderbook["bids"][0][0]
+woo_orderbook = woo.fetch_order_book("SPOT_WOO_USDT") #Fetch OrderBook of WOO Exchange. 
+first_ask_spot = woo_orderbook["asks"][0][0] #Fetch Order First Data for Asks 
+first_bids_spot = woo_orderbook["bids"][0][0] #Fetch OrderBook First Data for bids 
 
-print(first_ask_spot)
-print(second_ask_perp)
+print(first_ask_spot) 
+print(first_bids_spot)
