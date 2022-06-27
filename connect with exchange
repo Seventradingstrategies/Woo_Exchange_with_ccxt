@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import APIKey
 import time
 
-
 woo = ccxt.woo()
 
 #Connect with exchange using your API Keys
