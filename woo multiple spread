@@ -54,9 +54,14 @@ for item in woo_market:
 symbols = [symbol["id"] for symbol in woo_market.values()]
 symbols2 = [symbol for symbol in symbols if symbol.startswith("SPOT")]
 
+def spread_percentage(ask,bids):
+    spread1 = ((ask - bids) / ask) * 100
+    return spread1
+
 ask_spot = []
 bid_spot = []
 symbols_all = []
+spread_1 = []
 
 #printing all the spread pairing with made function
 for item in symbols2:
@@ -68,14 +73,18 @@ for item in symbols2:
     ask_spot.append(first_ask_spot)
     bid_spot.append(first_bid_spot)
     symbols_all.append(item)
+    spread_1.append(spread_percentage(first_ask_spot, first_bid_spot))
     time.sleep(0.2)
 
-pandas =  {"ask_spot" : ask_spot,
-"bid_spot": bid_spot,
-"symbols_all" : symbols_all}
+pandas = {"ask_spot" : ask_spot,
+            "bid_spot": bid_spot,
+           "spread": spread_1}
 
 pandas_1 = pd.DataFrame(pandas, index=[symbols_all])
 print(pandas_1)
+
+
+
 
 
 
