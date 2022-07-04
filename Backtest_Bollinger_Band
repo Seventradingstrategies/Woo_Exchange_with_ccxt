@@ -1,0 +1,109 @@
+#Import neccessary library 
+import ccxt
+import numpy as np 
+import pandas as pd 
+import matplotlib.pyplot as plt
+
+#Fetch Data From CCXT with WOO 
+api_key = ""
+api_secret = ""
+
+#initialise CCXT with woo exchange
+#Connect with exchange using API Keys
+woo = ccxt.woo({
+    "enableRateLimit": True,
+    "apiKey": api_key,
+    "secret": api_secret
+    })
+
+#Getting the time for CCXT
+since = woo.parse8601("2022-02-10T00:00:00z") #Get Unix Time First
+print(f"this will print Unix Time:  {since}")
+
+#Create a function to fetch OHLCV of candlestick for a coins
+def fetch_candlestick(pair, hour, since): 
+  candlestick = woo.fetch_ohlcv("SPOT_" + pair + "_USDT", hour, since, limit = 1000)
+  df = pd.DataFrame(candlestick, columns = ["Time","Open","High","Low","Close","Volume"])
+  df["Time"] = pd.to_datetime(df["Time"], unit="ms")
+  df.set_index("Time", inplace=True)
+
+  return df
+
+#Call function. 
+df = fetch_candlestick("WOO", "4h", since)
+
+#Creating a bollinger_band Function with pandas dataFrame 
+
+def bollinger_band(df): 
+  df["SMA"] = df["Close"].rolling(window=20).mean()
+  df["stddev"] = df["Close"].rolling(window=20).std()
+  df["Upper_band"] = df["SMA"] + 2* df["stddev"]
+  df["Lower_band"] = df["SMA"] - 2* df["stddev"]
+  df = df.dropna()
+  return df
+
+#Call bollinger_band function. 
+bollinger_band(df)
+
+#Creating a function 
+def signals(df):
+  df["Buy_Signals"] = np.where(df["Lower_band"] > df["Close"], 1, 0)
+  df["Sell_Signals"] = np.where(df["Upper_band"] < df["Close"], 1,0)
+  
+  return df 
+
+#Call the function 
+df = signals(df)
+df
+
+#Creating a plotting for the entire chart 
+def plot(df): 
+  plt.figure(figsize=(12,7))
+  plt.plot(df[["Close", "SMA", "Upper_band", "Lower_band"]])
+  plt.legend(["Close", "SMA", "Upper", "Lower"])
+  plt.show()
+
+plot(df)
+
+#Create a for function for Buy and Sell Position. 
+
+buys = [] 
+sells = [] 
+open_pos = False 
+
+for item in range(len(df)): 
+  if df.Lower_band[item] > df.Close[item]:  #if lower_band is larger than close price: 
+    if open_pos == False: #if open_position = false | No position yet
+        buys.append(item) #if it is false = Yes , #You Buy 
+        open_pos = True #After you buy, you set open_pos = True 
+
+  elif df.Upper_band[item] < df.Close[item]: #If Close Price is larger than Upper_band
+    if open_pos: #then if we have a open position
+      sells.append(item) #then we want to sell. 
+      open_pos = False #then after sell we set open=false 
+  
+#And we repeat again.
+
+#create the plotting with marker, marking the buying and selling 
+plt.figure(figsize=(12,7))
+plt.plot(df[["Close", "SMA", "Upper_band", "Lower_band"]])
+plt.scatter(df.iloc[buys].index, df.iloc[buys].Close, marker = '^', color = 'g')
+plt.scatter(df.iloc[sells].index, df.iloc[sells].Close, marker = '>', color = 'r')
+plt.legend(["Close", "SMA", "Upper", "Lower"])
+plt.show()
+
+merged = pd.concat([df.iloc[buys].Close, df.iloc[sells].Close], axis=1)
+
+merged.columns = ['Buy',"Sells"]
+merged
+
+#Look at profit from one position is being closed 
+totalprofit = merged.shift(-1).Sells - merged.Buy
+totalprofit
+
+#Look at profit in % from one position is being closed 
+relprofits = (merged.shift(-1).Sells - merged.Buy)/merged.Buy
+relprofits
+
+print(f"You have a realise profit of {round(relprofits.mean() * 100,2)}%")
+
